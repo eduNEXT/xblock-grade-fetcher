@@ -8,13 +8,23 @@ import requests
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.template import Context
-from django.utils.translation import ugettext_lazy as _
 from markupsafe import Markup
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Integer, Scope, String
-from xblockutils.resources import ResourceLoader
-from xblockutils.studio_editable import StudioEditableXBlockMixin
+
+try:
+    from xblock.utils.resources import ResourceLoader
+except ModuleNotFoundError:  # For backward compatibility with releases older than Quince.
+    from xblockutils.resources import ResourceLoader
+
+try:
+    from xblock.utils.studio_editable import StudioEditableXBlockMixin
+except ModuleNotFoundError:  # For backward compatibility with releases older than Quince.
+    from xblockutils.studio_editable import StudioEditableXBlockMixin
+
+# Make '_' a no-op so we can scrape strings
+_ = lambda text: text
 
 LOGGER = logging.getLogger(__name__)
 
@@ -408,7 +418,7 @@ class GradeFetcherXBlock(XBlock, StudioEditableXBlockMixin):
         # 1. If user in studio set authentication endpoint we call it
         try:
             # Get EXTERNAL_GRADER from configuration
-            proxies = self.get_settings()["proxies"]
+            proxies = self.get_settings().get("proxies")
             grader_headers = {"Content-Type": "application/json"}
             if self.authentication_endpoint:
                 # 2. Make call to auth endpoint and get the token
